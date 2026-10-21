@@ -1,0 +1,39 @@
+{
+  "name": "ai-failure-analyzer",
+  "version": "1.0.0",
+  "description": "Plug-and-play AI-powered test failure analyzer for CI/CD pipelines.",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "qa",
+    "automation",
+    "playwright",
+    "ai",
+    "ci-cd",
+    "github-actions",
+    "vercel-ai-sdk"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.0",
+    "@ai-sdk/google": "^1.1.0",
+    "@ai-sdk/openai": "^1.1.0",
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "ai": "^4.1.0",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,44 @@
+name: CI with AI Failure Analyzer
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # Permiso obligatorio para que la acción pueda comentar en el PR
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # (Opcional) Si tu proyecto incluye pruebas de Playwright de ejemplo
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # Ejecutamos las pruebas. Usamos '|| true' para asegurarnos de que si un test falla, 
+      # el pipeline no muera aquí y permita que el analizador de IA lea el reporte de fallos.
+      - name: Run Playwright Tests
+        run: npx playwright test || true
+
+      # Ejecutamos tu Solución Privada #1 (AI Failure Analyzer) localmente desde el repositorio
+      - name: Run AI Failure Analyzer
+        uses: ./ # Apunta al action.yml de la raíz de tu proyecto
+        with:
+          report-path: 'test-results.json' # Ruta donde Playwright genera su reporte JSON
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Selecciona el proveedor que desees probar (google, openai, anthropic, github)
+          AI_PROVIDER: 'google' 
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

@@ -1,0 +1,17 @@
+name: 'AI Failure Analyzer'
+description: 'Autonomous multi-model AI agent that analyzes test failures in CI/CD pipelines and comments code fixes on PRs.'
+author: 'Rafael Casas Wechek / Senior Automation Engineer'
+
+inputs:
+  report-path:
+    description: 'Path to the test execution report (e.g., Playwright JSON report)'
+    required: false
+    default: 'test-results.json'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+
+branding:
+  icon: 'cpu'
+  color: 'purple'

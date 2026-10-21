@@ -1,4 +1,4 @@
-import { generateText, Output } from 'ai';
+import { generateObject } from 'ai';
 import { getLLMProvider } from './providers/llm-factory.js';
 import { AnalysisResult, AnalysisResultSchema } from './schemas.js';
 import { NormalizedFailure } from '../adapters/base-adapter.js';
@@ -25,15 +25,13 @@ ${failure.stackTrace}
 ${failure.logsSnippet ? `- Console Logs / Stderr:\n\`\`\`\n${failure.logsSnippet}\n\`\`\`` : ''}
 `;
 
-  // Usamos generateText pasando el parámetro output con el esquema de Zod
-  const result = await generateText({
+  // generateObject compila perfectamente y retorna el objeto tipado mediante el esquema de Zod
+  const { object } = await generateObject({
     model,
+    schema: AnalysisResultSchema,
     system: systemPrompt,
     prompt: userPrompt,
-    output: Output.object({
-      schema: AnalysisResultSchema,
-    }),
   });
 
-  return result.output as AnalysisResult;
+  return object;
 }

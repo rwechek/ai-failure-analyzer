@@ -30,7 +30,9 @@ jobs:
       # Ejecutamos las pruebas. Usamos '|| true' para asegurarnos de que si un test falla, 
       # el pipeline no muera aquí y permita que el analizador de IA lea el reporte de fallos.
       - name: Run Playwright Tests
-        run: npx playwright test --reporter=json --output-file=test-results.json || true
+        run: npx playwright test --reporter=json || true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: test-results.json
 
       # Ejecutamos tu Solución Privada #1 (AI Failure Analyzer) localmente desde el repositorio
       - name: Run AI Failure Analyzer

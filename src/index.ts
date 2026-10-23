@@ -1,4 +1,13 @@
-import 'dotenv/config';
+// Carga segura de dotenv solo si NO estamos corriendo en GitHub Actions
+if (!process.env.GITHUB_ACTIONS) {
+  try {
+    await import('dotenv/config');
+  } catch {
+    // Si no existe o no está instalado, se ignora silenciosamente en producción
+  }
+}
+
+
 import * as core from '@actions/core';
 import { PlaywrightAdapter } from './adapters/playwright.adapter.js';
 import { analyzeTestFailure } from './core/analyzer.agent.js';

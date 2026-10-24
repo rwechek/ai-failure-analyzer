@@ -7,9 +7,8 @@ if (!process.env.GITHUB_ACTIONS) {
   }
 }
 
-
 import * as core from '@actions/core';
-import { PlaywrightAdapter } from './adapters/playwright.adapter.js';
+import { getTestAdapter } from './adapters/adapter-factory.js';
 import { analyzeTestFailure } from './core/analyzer.agent.js';
 import { postPRComment } from './github/github.client.js';
 import { NormalizedFailure } from './adapters/base-adapter.js';
@@ -17,9 +16,15 @@ import { NormalizedFailure } from './adapters/base-adapter.js';
 async function run() {
   try {
     const reportPath = core.getInput('report-path') || 'test-results.json';
-    core.info(`Reading Playwright report from: ${reportPath}`);
+    
+    // Leemos el framework especificado en el workflow de GitHub Actions (por defecto 'playwright')
+    const framework = core.getInput('framework') || process.env.FRAMEWORK || 'playwright';
 
-    const adapter = new PlaywrightAdapter();
+    core.info(`[AI-Failure-Analyzer] Framework detectado: ${framework}`);
+    core.info(`[AI-Failure-Analyzer] Leyendo reporte desde: ${reportPath}`);
+
+    // Obtenemos el adaptador correspondiente mediante la fábrica
+    const adapter = getTestAdapter(framework);
     const rawFailures = await adapter.parseReport(reportPath);
 
     if (rawFailures.length === 0) {

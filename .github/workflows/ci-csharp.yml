@@ -1,0 +1,35 @@
+name: CI - C# .NET
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-csharp-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Run .NET Tests
+        run: |
+          # dotnet test para generar el reporte de resultados
+          dotnet test --logger "trx" || true
+
+      - name: Run AI Failure Analyzer (CSharp)
+        uses: ./
+        with:
+          framework: 'csharp'
+          report-path: './TestResults/test-report.json' # Ajusta la ruta según el formato generado
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_PROVIDER: 'google'
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

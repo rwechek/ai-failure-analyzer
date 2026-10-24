@@ -1,0 +1,34 @@
+name: CI - Java JUnit
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-java-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Run Java Tests
+        run: |
+          # Reemplaza esto con tu comando de Maven o Gradle (ej: mvn test)
+          # Asegúrate de que el reporte JSON resultante quede en la ruta esperada
+          echo "Ejecutando pruebas de Java..."
+
+      - name: Run AI Failure Analyzer (Java)
+        uses: ./
+        with:
+          framework: 'java'
+          report-path: './target/surefire-reports/test-report.json' # Ajusta la ruta según tu proyecto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_PROVIDER: 'google'
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

@@ -21,9 +21,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Run Java Tests
-        run: mvn test || true
-
       - name: Normalize Java Test Report to Standard JSON
         run: |
           node -e '
@@ -46,6 +43,7 @@ jobs:
         uses: ./
         with:
           report-path: 'test-results.json'
+          framework: 'java'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AI_PROVIDER: 'google'

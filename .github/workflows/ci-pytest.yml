@@ -33,6 +33,7 @@ jobs:
         uses: ./ # Reutiliza exactamente la misma acción local
         with:
           report-path: 'pytest-results.json' # Apunta al reporte generado por pytest
+          framework: 'pytest'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AI_PROVIDER: 'google'

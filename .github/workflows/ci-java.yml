@@ -1,8 +1,9 @@
 name: CI - Java JUnit
 
 on:
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch: # Solo se ejecuta manualmente desde la pestaña "Actions" de GitHub
+  #pull_request:
+    #branches: [ main, master ]
 
 jobs:
   run-java-tests:

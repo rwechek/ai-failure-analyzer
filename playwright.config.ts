@@ -26,10 +26,17 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    // baseURL: 'http://localhost:3000',
+     baseURL: process.env.CI ? 'http://localhost:3000' : 'http://localhost:4200',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+  },
+
+  webServer: {
+    command: 'npm run start', // Comando para arrancar tu app (ej. Next.js, Angular, Node, etc.)
+    url: 'http://localhost:3000',
+    timeout: 120 * 1000, // Tiempo de espera máximo para que el servidor responda
+    reuseExistingServer: !process.env.CI, // Si estás en local y ya está abierto, lo reutiliza
   },
 
   /* Configure projects for major browsers */

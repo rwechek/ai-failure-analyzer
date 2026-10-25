@@ -20,24 +20,23 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Run .NET Tests
-        run: dotnet test --logger "trx" || true
-
       - name: Normalize C# Test Report to Standard JSON
         run: |
           node -e '
             const fs = require("fs");
+            // Estructura exacta que espera el CSharpAdapter
             const report = {
-              stats: { failures: 1 },
-              failures: [
+              testResults: [
                 {
-                  testName: "MyNamespace.MyTests.Test_FailureExample",
-                  errorMessage: "Assert.AreEqual failed. Expected:<10>. Actual:<5>.",
+                  name: "MyNamespace.MyTests.Test_FailureExample",
+                  outcome: "Failed",
+                  ErrorMessage: "Assert.AreEqual failed. Expected:<10>. Actual:<5>.",
                   stackTrace: "at MyNamespace.MyTests.Test_FailureExample() in C:\\tests\\MyTests.cs:line 25"
                 }
               ]
             };
             fs.writeFileSync("test-results.json", JSON.stringify(report, null, 2));
+            console.log("Reporte JSON para CSharpAdapter generado exitosamente.");
           '
 
       - name: Run AI Failure Analyzer (CSharp)

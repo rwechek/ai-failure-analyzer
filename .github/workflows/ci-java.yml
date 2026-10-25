@@ -25,18 +25,26 @@ jobs:
         run: |
           node -e '
             const fs = require("fs");
-            // Genera el esquema estandarizado que consume el agente
+            // Estructura exacta que espera el JavaAdapter
             const report = {
-              stats: { failures: 1 },
-              failures: [
+              testsuites: [
                 {
-                  testName: "com.example.AppTest > testExampleFailure",
-                  errorMessage: "java.lang.AssertionError: Expected true but got false",
-                  stackTrace: "at com.example.AppTest.testExampleFailure(AppTest.java:18)"
+                  name: "com.example.AppTest",
+                  testcase: [
+                    {
+                      name: "testExampleFailure",
+                      classname: "com.example.AppTest",
+                      failure: {
+                        message: "java.lang.AssertionError: Expected true but got false",
+                        stackTrace: "at com.example.AppTest.testExampleFailure(AppTest.java:18)"
+                      }
+                    }
+                  ]
                 }
               ]
             };
             fs.writeFileSync("test-results.json", JSON.stringify(report, null, 2));
+            console.log("Reporte JSON para JavaAdapter generado exitosamente.");
           '
 
       - name: Run AI Failure Analyzer (Java)

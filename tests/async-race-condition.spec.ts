@@ -1,27 +1,20 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Dashboard Dinámico - Pruebas de Carga Asíncrona', () => {
+test.describe('Escenario 1: Fallas Asíncronas y Race Conditions', () => {
 
-  test('Debe cargar y mostrar los datos del usuario tras petición de red', async ({ page }) => {
-    // Navegar a la página de inicio
-    await page.goto('/dashboard');
+  test('Debe fallar por timeout ante un elemento dinámico usando espera frágil', async ({ page }) => {
+    // 1. Navegamos a la URL pública de referencia
+    await page.goto('https://playwright.dev/');
 
-    // ANTI-PATRÓN 1: Uso de espera fija (fragilidad ante variaciones de red)
-    await page.waitForTimeout(1); 
+    // 2. ANTI-PATRÓN: Uso de espera fija (waitForTimeout) en lugar de sincronización nativa
+    await page.waitForTimeout(1000); 
 
-    // ANTI-PATRÓN 2: Selector frágil dependiente de clases dinámicas internas
-    const userCard = page.locator('div.css-x972yz-card-wrapper > div.loaded');
+    // 3. Simulamos un selector de un componente dinámico que no existe en esta web
+    const dynamicCard = page.locator('.async-dynamic-modal-wrapper');
 
-    // Falla esperada: El elemento tarda en hidratarse o la API demora más de 3 segundos
-    await expect(userCard).toBeVisible();
-
-    // Intentar interactuar inmediatamente con un botón que depende de un estado asíncrono
-    const actionButton = page.getByRole('button', { name: 'Procesar Datos' });
-    await actionButton.click();
-
-    // Verificación de éxito asíncrona faltante o mal sincronizada
-    const successMessage = page.locator('.notification-banner');
-    await expect(successMessage).toHaveText('Operación exitosa');
+    // 4. Esto provocará un TimeoutError exacto, generando el reporte JSON 
+    // que tu ai-failure-analyzer interceptará para analizar el anti-patrón y comentar en el PR.
+    await expect(dynamicCard).toBeVisible({ timeout: 2000 });
   });
 
 });

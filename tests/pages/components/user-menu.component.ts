@@ -1,10 +1,15 @@
-import { Page } from "@playwright/test";
+import { Page, expect } from '@playwright/test';
 
 export class UserMenuComponent {
   constructor(private page: Page) {}
 
   async clickProfileSettings() {
-    // Selector obsoleto o erróneo que provocará el fallo en cascada
-    await this.page.locator('#old-profile-settings-btn').click();
+    const profileButton = this.page.locator('#old-profile-settings-btn');
+    
+    // Forzamos una aserción rápida con un timeout corto (2 segundos)
+    // Esto provocará un fallo inmediato en esta línea exacta, generando un JSON limpio
+    await expect(profileButton).toBeVisible({ timeout: 2000 });
+    
+    await profileButton.click();
   }
 }

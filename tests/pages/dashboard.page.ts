@@ -9,7 +9,7 @@ export class DashboardPage {
   }
 
   async navigateToSettings() {
-    await this.page.goto('/dashboard');
+    await this.page.goto('https://playwright.dev/');
     // Llama al componente anidado
     await this.userMenu.clickProfileSettings();
   }

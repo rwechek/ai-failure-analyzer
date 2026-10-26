@@ -32633,53 +32633,203 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 6144:
+/***/ 750:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   B: () => (/* binding */ PlaywrightAdapter)
-/* harmony export */ });
-/* harmony import */ var fs_promises__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(1943);
-/* harmony import */ var fs_promises__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(fs_promises__WEBPACK_IMPORTED_MODULE_0__);
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  s: () => (/* binding */ getTestAdapter)
+});
+
+// EXTERNAL MODULE: external "fs/promises"
+var promises_ = __nccwpck_require__(1943);
+;// CONCATENATED MODULE: ./src/adapters/playwright.adapter.ts
 
 class PlaywrightAdapter {
     async parseReport(reportPath) {
         try {
-            const rawData = await fs_promises__WEBPACK_IMPORTED_MODULE_0__.readFile(reportPath, 'utf-8');
-            const report = JSON.parse(rawData);
+            const fileContent = await promises_.readFile(reportPath, 'utf-8');
+            const report = JSON.parse(fileContent);
             const failures = [];
-            // Función recursiva para recorrer las suites de Playwright
-            const extractFailuresFromSuites = (suites) => {
-                for (const suite of suites) {
-                    if (suite.suites) {
-                        extractFailuresFromSuites(suite.suites);
-                    }
-                    if (suite.specs) {
-                        for (const spec of suite.specs) {
-                            for (const test of spec.tests) {
-                                // Buscamos resultados fallidos o con timeout
-                                const failedResult = test.results.find((res) => res.status === 'failed' || res.status === 'timedOut');
-                                if (failedResult) {
+            if (report && report.suites) {
+                for (const suite of report.suites) {
+                    this.traverseSuite(suite, failures);
+                }
+            }
+            return failures;
+        }
+        catch (error) {
+            throw new Error(`[PlaywrightAdapter] Error leyendo el reporte: ${error.message}`);
+        }
+    }
+    traverseSuite(suite, failures) {
+        if (suite.specs) {
+            for (const spec of suite.specs) {
+                if (spec.tests) {
+                    for (const test of spec.tests) {
+                        if (test.results) {
+                            for (const result of test.results) {
+                                if (result.status === 'failed' || result.status === 'timedOut') {
+                                    const error = result.error || {};
+                                    const testName = `${suite.title} > ${spec.title}`;
+                                    const errorMessage = error.message || 'Unknown Playwright error';
+                                    const stackTrace = error.stack || error.snippet || 'No stack trace available';
                                     failures.push({
-                                        testName: spec.title,
-                                        errorMessage: failedResult.error?.message || 'Unknown error message',
-                                        stackTrace: failedResult.error?.stack || 'No stack trace available',
-                                        logsSnippet: failedResult.stderr ? failedResult.stderr.join('\n') : undefined
+                                        testName,
+                                        errorMessage,
+                                        stackTrace,
+                                        logsSnippet: result.stderr?.join('\n') || undefined,
                                     });
                                 }
                             }
                         }
                     }
                 }
-            };
-            if (report.suites) {
-                extractFailuresFromSuites(report.suites);
+            }
+        }
+        if (suite.suites) {
+            for (const subSuite of suite.suites) {
+                this.traverseSuite(subSuite, failures);
+            }
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./src/adapters/pytest.adapter.ts
+
+class PytestAdapter {
+    async parseReport(reportPath) {
+        try {
+            const fileContent = await promises_.readFile(reportPath, 'utf-8');
+            const report = JSON.parse(fileContent);
+            const failures = [];
+            if (report && report.tests) {
+                for (const test of report.tests) {
+                    if (test.outcome === 'failed') {
+                        const testName = test.nodeid || 'Unknown Pytest Test';
+                        const callInfo = test.call || test.setup || test.teardown || {};
+                        const crash = callInfo.crash || {};
+                        const errorMessage = crash.message || callInfo.longrepr || 'Unknown Pytest failure';
+                        const stackTrace = callInfo.longrepr || 'No stack trace available';
+                        failures.push({
+                            testName,
+                            errorMessage,
+                            stackTrace: typeof stackTrace === 'string' ? stackTrace : JSON.stringify(stackTrace, null, 2),
+                            logsSnippet: test.stdout || undefined,
+                        });
+                    }
+                }
             }
             return failures;
         }
         catch (error) {
-            throw new Error(`Failed to parse Playwright report at ${reportPath}: ${error.message}`);
+            throw new Error(`[PytestAdapter] Error leyendo el reporte de pytest: ${error.message}`);
         }
+    }
+}
+
+;// CONCATENATED MODULE: ./src/adapters/java.adapter.ts
+
+class JavaAdapter {
+    async parseReport(reportPath) {
+        try {
+            const fileContent = await promises_.readFile(reportPath, 'utf-8');
+            const report = JSON.parse(fileContent);
+            const failures = [];
+            // Estructura común esperada en reportes de JUnit/TestSuites en JSON
+            const testsuites = report.testsuites || report.suites || [report];
+            for (const suite of testsuites) {
+                if (suite.testcase || suite.cases) {
+                    const cases = suite.testcase || suite.cases;
+                    for (const testCase of cases) {
+                        if (testCase.failure || testCase.error) {
+                            const errorInfo = testCase.failure || testCase.error;
+                            const testName = `${suite.name || 'UnknownSuite'} > ${testCase.name || 'UnknownTest'} (${testCase.classname || ''})`;
+                            const errorMessage = typeof errorInfo === 'string'
+                                ? errorInfo
+                                : (errorInfo.message || errorInfo._ || 'Unknown Java/JUnit failure');
+                            const stackTrace = typeof errorInfo === 'string'
+                                ? errorInfo
+                                : (errorInfo.stackTrace || errorInfo.text || 'No stack trace available');
+                            failures.push({
+                                testName,
+                                errorMessage,
+                                stackTrace,
+                            });
+                        }
+                    }
+                }
+            }
+            return failures;
+        }
+        catch (error) {
+            throw new Error(`[JavaAdapter] Error leyendo el reporte de Java: ${error.message}`);
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./src/adapters/csharp.adapter.ts
+
+class CSharpAdapter {
+    async parseReport(reportPath) {
+        try {
+            const fileContent = await promises_.readFile(reportPath, 'utf-8');
+            const report = JSON.parse(fileContent);
+            const failures = [];
+            // Adaptable a estructuras comunes de reportes de test en .NET (ej. NUnit JSON / VSTest)
+            const testResults = report.results || report.testResults || report.Tests || [];
+            for (const test of testResults) {
+                if (test.outcome === 'Failed' || test.status === 'Failed' || test.result === 'Failed') {
+                    const testName = test.name || test.FullyQualifiedName || 'Unknown C# Test';
+                    const output = test.output || test.ErrorMessage || test.stackTrace || {};
+                    const errorMessage = typeof output === 'string'
+                        ? output
+                        : (output.message || test.message || 'Unknown .NET failure');
+                    const stackTrace = typeof output === 'string'
+                        ? output
+                        : (output.stackTrace || test.stackTrace || 'No stack trace available');
+                    failures.push({
+                        testName,
+                        errorMessage,
+                        stackTrace,
+                        logsSnippet: test.standardOutput || undefined,
+                    });
+                }
+            }
+            return failures;
+        }
+        catch (error) {
+            throw new Error(`[CSharpAdapter] Error leyendo el reporte de C#: ${error.message}`);
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./src/adapters/adapter-factory.ts
+
+
+
+
+function getTestAdapter(framework) {
+    const normalizedFramework = (framework || 'playwright').toLowerCase().trim();
+    switch (normalizedFramework) {
+        case 'playwright':
+            return new PlaywrightAdapter();
+        case 'pytest':
+        case 'python':
+            return new PytestAdapter();
+        case 'java':
+        case 'junit':
+        case 'maven':
+        case 'gradle':
+            return new JavaAdapter();
+        case 'csharp':
+        case 'dotnet':
+        case 'nunit':
+        case 'xunit':
+            return new CSharpAdapter();
+        default:
+            throw new Error(`[AdapterFactory] Framework no soportado o desconocido: "${framework}"`);
     }
 }
 
@@ -54550,7 +54700,17 @@ async function analyzeTestFailure(failure) {
     const sourceContext = await extractSourceContextFromStackTrace(failure.stackTrace);
     const systemPrompt = `
 You are an expert Senior QA Automation Engineer and Software Architect. 
-Your objective is to analyze automated test failures in CI/CD pipelines, inspect the provided source code (such as Page Object Models or test files), identify the precise root cause, and provide a clean, ready-to-implement code fix.
+Your objective is to analyze automated test failures in CI/CD pipelines, inspect the provided source code (such as Page Object Models or test files), identify the precise root cause, and provide actionable solutions.
+
+Guidelines:
+1. Assess the clarity, completeness, and stack traces of the error logs.
+2. Assign an explicit Confidence Level (HIGH, MEDIUM, or LOW):
+   - HIGH: Clear assertion failures, explicit timeouts, or distinct stack traces.
+   - MEDIUM: Partial context or multi-factor failure indicators.
+   - LOW: Ambiguous errors, missing stack traces, opaque promise rejections, or generic script errors.
+3. Handle Ambiguity Safely: If the error is cryptic or data is insufficient, do NOT hallucinate a fix. Lower the confidence level to LOW, state the uncertainty under Root Cause, and provide diagnostic or troubleshooting steps instead of a blind code fix.
+4. If the root cause is evident, provide a clean, ready-to-implement code fix.
+
 Be technical, direct, and concise.
 `;
     // 3. Construimos el prompt enriqueciendo el error con el contexto real del código fuente si está disponible
@@ -54663,7 +54823,7 @@ ${analysis.codeSolution}
 __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7484);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _adapters_playwright_adapter_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(6144);
+/* harmony import */ var _adapters_adapter_factory_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(750);
 /* harmony import */ var _core_analyzer_agent_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(9904);
 /* harmony import */ var _github_github_client_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(807);
 // Carga segura de dotenv solo si NO estamos corriendo en GitHub Actions
@@ -54682,8 +54842,12 @@ if (!process.env.GITHUB_ACTIONS) {
 async function run() {
     try {
         const reportPath = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('report-path') || 'test-results.json';
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Reading Playwright report from: ${reportPath}`);
-        const adapter = new _adapters_playwright_adapter_js__WEBPACK_IMPORTED_MODULE_1__/* .PlaywrightAdapter */ .B();
+        // Leemos el framework especificado en el workflow de GitHub Actions (por defecto 'playwright')
+        const framework = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('framework') || process.env.FRAMEWORK || 'playwright';
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`[AI-Failure-Analyzer] Framework detectado: ${framework}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`[AI-Failure-Analyzer] Leyendo reporte desde: ${reportPath}`);
+        // Obtenemos el adaptador correspondiente mediante la fábrica
+        const adapter = (0,_adapters_adapter_factory_js__WEBPACK_IMPORTED_MODULE_1__/* .getTestAdapter */ .s)(framework);
         const rawFailures = await adapter.parseReport(reportPath);
         if (rawFailures.length === 0) {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('No test failures detected. Everything looks clean!');

@@ -7,6 +7,11 @@ inputs:
     description: 'Path to the test execution report (e.g., Playwright JSON report)'
     required: false
     default: 'test-results.json'
+  
+  framework:
+    description: 'Test framework or language type (e.g., playwright, pytest, java, csharp)'
+    required: false
+    default: 'playwright'
 
 runs:
   using: 'node20'

@@ -5,6 +5,6 @@ export interface NormalizedFailure {
   logsSnippet?: string;
 }
 
-export interface TestAdapter {
-  parseReport(reportPath: string): Promise<NormalizedFailure[]>;
+export interface BaseAdapter {
+  parseReport(reportPath: string): Promise<NormalizedFailure[]> | NormalizedFailure[];
 }

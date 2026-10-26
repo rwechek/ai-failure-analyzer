@@ -1,0 +1,51 @@
+name: CI - C# .NET
+
+on:
+  workflow_dispatch: # Solo se ejecuta manualmente desde la pestaña "Actions" de GitHub
+  #pull_request:
+    #branches: [ main, master ]
+
+jobs:
+  run-csharp-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Normalize C# Test Report to Standard JSON
+        run: |
+          node -e '
+            const fs = require("fs");
+            // Estructura exacta que espera el CSharpAdapter
+            const report = {
+              testResults: [
+                {
+                  name: "MyNamespace.MyTests.Test_FailureExample",
+                  outcome: "Failed",
+                  ErrorMessage: "Assert.AreEqual failed. Expected:<10>. Actual:<5>.",
+                  stackTrace: "at MyNamespace.MyTests.Test_FailureExample() in C:\\tests\\MyTests.cs:line 25"
+                }
+              ]
+            };
+            fs.writeFileSync("test-results.json", JSON.stringify(report, null, 2));
+            console.log("Reporte JSON para CSharpAdapter generado exitosamente.");
+          '
+
+      - name: Run AI Failure Analyzer (CSharp)
+        uses: ./
+        with:
+          report-path: 'test-results.json'
+          framework: 'csharp'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_PROVIDER: 'google'
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

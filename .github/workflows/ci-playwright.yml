@@ -1,8 +1,8 @@
-name: CI with AI Failure Analyzer
+name: CI - Playwright E2E
 
 on:
   pull_request:
-    branches: [main, master]
+    branches: [ main, master ]
 
 jobs:
   run-tests:
@@ -23,24 +23,19 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # (Opcional) Si tu proyecto incluye pruebas de Playwright de ejemplo
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # Ejecutamos las pruebas. Usamos '|| true' para asegurarnos de que si un test falla, 
-      # el pipeline no muera aquí y permita que el analizador de IA lea el reporte de fallos.
       - name: Run Playwright Tests
         run: npx playwright test --reporter=json || true
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: test-results.json
 
-      # Ejecutamos tu Solución Privada #1 (AI Failure Analyzer) localmente desde el repositorio
-      - name: Run AI Failure Analyzer
-        uses: ./ # Apunta al action.yml de la raíz de tu proyecto
+      - name: Run AI Failure Analyzer (Playwright)
+        uses: ./ # Apunta a tu acción local en la raíz
         with:
-          report-path: 'test-results.json' # Ruta donde Playwright genera su reporte JSON
+          report-path: 'test-results.json'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Selecciona el proveedor que desees probar (google, openai, anthropic, github)
-          AI_PROVIDER: 'google' 
+          AI_PROVIDER: 'google'
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

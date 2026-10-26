@@ -1,0 +1,41 @@
+name: CI - Python Pytest
+
+on:
+  workflow_dispatch: # Solo se ejecuta manualmente desde la pestaña "Actions" de GitHub
+  #pull_request:
+    #branches: [ main, master ]
+
+jobs:
+  run-python-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-json-report
+
+      - name: Run Pytest with JSON Report
+        run: |
+          pytest --json-report --json-report-file=pytest-results.json || true
+
+      - name: Run AI Failure Analyzer (Pytest)
+        uses: ./ # Reutiliza exactamente la misma acción local
+        with:
+          report-path: 'pytest-results.json' # Apunta al reporte generado por pytest
+          framework: 'pytest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_PROVIDER: 'google'
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

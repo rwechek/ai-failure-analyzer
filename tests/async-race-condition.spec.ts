@@ -7,7 +7,7 @@ test.describe('Dashboard Dinámico - Pruebas de Carga Asíncrona', () => {
     await page.goto('/dashboard');
 
     // ANTI-PATRÓN 1: Uso de espera fija (fragilidad ante variaciones de red)
-    await page.waitForTimeout(3000); 
+    await page.waitForTimeout(1); 
 
     // ANTI-PATRÓN 2: Selector frágil dependiente de clases dinámicas internas
     const userCard = page.locator('div.css-x972yz-card-wrapper > div.loaded');
